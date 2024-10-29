@@ -1,0 +1,30 @@
+{% extends "app/base.html" %}
+{% load static %}
+
+{% block title %} About {% endblock title %}
+
+
+{% block main-content %}
+  <div class="container mt-3">
+    <br>
+    <a class="navbar-brand container d-flex justify-content-center align-items-center" href="#">
+        <img src="{% static 'app/images/logo.png' %}" alt="" width="100" height="85">
+      </a>
+      <br>
+    <h2 class="text-center"> About Us</h2>
+    <br>
+    <div class="row container">
+        <p class="fs-4 text-center">This is a public limited company having it's registered and corporate office at New Delhi in India. Company was established in 2024. This is India's rapidly growing online dairy products site. </p>
+    </div>
+    <br>
+    <br>
+    <h2 class="text-center">Mission</h2>
+    <br>
+    <div class="row-container">
+        <p class="fs-4 text-center"> To embrace right technology to delight our Customers. Empowering the farmer community through our unique 'Relationship Farming' Model. To anticipate, understand and respons to our customers and respons to our customers. </p>
+    </div>
+  </div>
+  <br>
+  <br>
+  <br>
+{% endblock main-content %}
