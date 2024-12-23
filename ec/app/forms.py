@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, UsernameField, PasswordChangeForm, SetPasswordForm, PasswordResetForm
 from django.contrib.auth.models import User
 from .models import Customer
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 
 #LOGIN PART
 
@@ -10,10 +12,15 @@ class LoginForm(AuthenticationForm):
     
     password = forms.CharField(widget = forms.PasswordInput(attrs = {'autocomplete' : 'current-password', 'class': 'form-control'}))
 
+#class CustomUser(AbstractUser):
+ #   full_name = models.CharField(max_length=255, blank=True)
 
 
 # REGISTRATION PART
 class CustomerRegistrationForm(UserCreationForm):
+    
+    #full_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}),required=False,)
+    
     username = forms.CharField(widget=forms.TextInput(attrs={'autofocus': 'True', 'class': 'form-control'}))
     
     
@@ -46,7 +53,7 @@ class MySetPasswordForm(SetPasswordForm):
 class CustomerProfileForm(forms.ModelForm):
     class Meta:
         model = Customer
-        fields = ['name', 'locality', 'city', 'mobile', 'state', 'zipcode']
+        fields = ['name', 'locality', 'city', 'mobile', 'state', 'zipcode', 'email']
         widgets ={
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'locality': forms.TextInput(attrs={'class': 'form-control'}),
@@ -54,5 +61,7 @@ class CustomerProfileForm(forms.ModelForm):
             'mobile': forms.NumberInput(attrs={'class': 'form-control'}),
             'state': forms.Select(attrs={'class': 'form-control'}),
             'zipcode': forms.NumberInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
+        
         

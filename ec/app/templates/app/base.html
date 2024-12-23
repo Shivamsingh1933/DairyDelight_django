@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'app/css/owl.carousel.min.css' %}"/>
     <link rel="stylesheet" href="{% static 'app/css/all.min.css' %}"/>
     <link rel="stylesheet" href="{% static 'app/css/style.css' %}"/>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <title> DairyDelight | {% block title %} {% endblock title %} </title>
 </head>
@@ -56,9 +57,9 @@
               </li>
              
             </ul>
-            <form class="d-flex" role="search">
-              <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-              <button class="btn btn-outline-success text-white" type="submit">Search</button>
+            <form class="d-flex" role="search" action="/search">
+              <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" name="search">
+              <button class="btn btn-outline-dark" type="submit">Search</button>
             </form>
           </div>
 
@@ -69,7 +70,7 @@
               </a>
               <ul class="dropdown-menu" aria-labelledby="profileDropdown">
                 <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
-                <li><a class="dropdown-item" href="#">Orders</a></li>
+                <li><a class="dropdown-item" href="{% url 'orders' %}">Orders</a></li>
                 <li><a class="dropdown-item" href="{% url 'passwordchange' %}">Change Password</a></li>
                 
               <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
@@ -81,10 +82,10 @@
 
             </li>
             <li class="nav-item mx-2">
-              <a class="nav-link text-white" href="{% url 'showcart' %}">Cart 4</a>
+              <a class="nav-link text-white" href="{% url 'showcart' %}"> <span class="badge bg-danger"> {% if totalitem > 0 %} {{totalitem}} {% endif %} </span> Cart</a>
             </li>
             <li class="nav-item mx-2">
-              <a class="nav-link text-white" href="#">Wishlist 4</a>
+              <a class="nav-link text-white" href="{% url 'wishlist' %}"> <span class="badge bg-danger"> {% if wishitem > 0 %} {{wishitem}} {% endif %} </span> <i class="fa fa-heart"></i> </a>
             </li>
             {% else %}
 
@@ -105,6 +106,7 @@
       {% block information %} {% endblock information %}
       {% block main-content %}{% endblock main-content %}
       {% block payment-gateway %}{% endblock payment-gateway %}
+
 
       <footer class="container-fluid fixed-bottom bg-success text-center p-2 mt-5">
         <p>&copy; 2024 DairyDelight. All rights reserved.</p>

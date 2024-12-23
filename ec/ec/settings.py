@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ph(a#mmnnilfn4^vi$(8xpy7cze)47pdkg$l070xwczg)f+*ke
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app', '.now.sh']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -126,9 +126,9 @@ LOGIN_REDIRECT_URL = '/profile/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" 
 
-import os
-
-STATICFILES_DIRS = os.path.join(BASE_DIR, 'static'),
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
+RAZOR_KEY_ID = "rzp_test_39b11T26kOph7X"
+RAZOR_KEY_SECRET = "o2MVnjD8pMD3MlyZm2tDJEOB"
+SESSION_COOKIE_AGE = 3600
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'

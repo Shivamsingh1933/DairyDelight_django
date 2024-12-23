@@ -1,0 +1,44 @@
+{% extends "app/base.html" %}
+{% load static %}
+{% block title %} Checkout {% endblock title %}
+{% block main-content %}
+<br>
+<br>
+<br>
+
+
+<div class="container text-center mt-5">
+    <h1>Thank You for Your Order!</h1>
+    <p>Your payment was successful.</p>
+
+    <h4>Transaction Details</h4>
+    <p><strong>Transaction ID:</strong> {{ payment.razorpay_payment_id }}</p>
+    <p><strong>Order ID:</strong> {{ payment.razorpay_order_id }}</p>
+    <p><strong>Amount Paid:</strong> Rs. {{ payment.amount }}</p>
+
+    <a href="{% url 'download_receipt' payment.razorpay_payment_id %}" class="btn btn-success mt-3">
+        Download Receipt (PDF)
+    </a>
+    <a href="{% url 'home' %}" class="btn btn-success mt-3">
+        Click here to go to our Home Page or wait for 20 seconds.
+    </a>
+</div>
+
+<script>
+    setTimeout(function() {
+        window.location.href = "/";
+    }, 20000); // Redirect after 45 seconds
+</script>
+
+
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+
+{% endblock main-content %}

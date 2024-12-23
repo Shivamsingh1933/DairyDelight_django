@@ -6,9 +6,14 @@ from django.contrib.auth import views as auth_view
 from . forms import LoginForm, MyPasswordResetForm, MyPasswordChangeForm, MySetPasswordForm
 from django.urls import path
 from . import views
+from django.urls import path
+from django.urls import path
+from . import views
+from .views import checkout
+
 
 urlpatterns = [
-    path("", views.home),
+    path("", views.home, name="home"),
     path('contact/', views.contact, name="contact" ),
     path('about/', views.about, name="about"),
     path("category/<slug:val>", views.CategoryView.as_view(), name="category"),
@@ -17,13 +22,33 @@ urlpatterns = [
     path('profile/', views.ProfileView.as_view(), name="profile"),
     path('address/', views.address, name="address"),
     path('updateAddress/<int:pk>', views.updateAddressView.as_view(), name='updateAddress'),
+   
+    path('checkout/', checkout.as_view(), name='checkout'),
+    path('paymentdone/', views.payment_done, name='paymentdone'),
+    path('orders/', views.orders, name='orders'),
+    path('paymentdone/', views.payment_done, name='payment_done'),
+    path('download_receipt/<str:payment_id>/', views.download_receipt, name='download_receipt'),
+    path('search/', views.search, name='search'),
+    
+    #path('payment/success/', PaymentSuccess.as_view(), name='payment_success'),
+
     
     path('add-to-cart/', views.add_to_cart, name='add-to-cart'),
     path('cart/', views.show_cart, name='showcart'),
-    path('checkout/', views.checkout.as_view(), name='checkout'),
+  
+    #path('checkout/', checkout.as_view(), name='checkout'),
+    path('orders/', views.home, name='orders'),
+
+
     path('pluscart/', views.plus_cart),
     path('minuscart/', views.minus_cart),
     path('removecart/', views.remove_cart),
+    path('pluswishlist/', views.plus_wishlist),
+    path('minuswishlist/', views.minus_wishlist),
+    path('wishlist/', views.show_wishlist, name='wishlist'),
+
+    #path("send-payment-link/", views.send_payment_link, name="send_payment_link"),
+    
    
     
     #login authentication
