@@ -135,5 +135,14 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 RAZOR_KEY_ID = "rzp_test_39b11T26kOph7X"
 RAZOR_KEY_SECRET = "o2MVnjD8pMD3MlyZm2tDJEOB"
-SESSION_COOKIE_AGE = 3600
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_COOKIE_AGE = 1209600  # Two weeks
+SESSION_COOKIE_SAMESITE = 'Lax'  # Ensures cookies are sent during Razorpay redirects
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Default
+SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True  # Ensures session is saved on every request
+

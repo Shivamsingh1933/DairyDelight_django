@@ -51,10 +51,12 @@ from django.shortcuts import render
 from django.urls import reverse
 from reportlab.pdfgen import canvas
 from .models import Payment, OrderPlaced, Customer, Cart
+from django.contrib.auth import authenticate, login
 
 
-@login_required
+
 # Create your views here.
+@login_required
 def home(request):
     totalitem = 0
     wishitem = 0
@@ -63,7 +65,7 @@ def home(request):
         wishitem = len(Wishlist.objects.filter(user=request.user))
     return render(request, "app/home.html", locals())
 
-@login_required
+
 def contact(request):
     totalitem = 0
     wishitem = 0
@@ -73,7 +75,7 @@ def contact(request):
     return render(request, "app/contact.html", locals())
 
 
-@login_required
+
 def about(request):
     totalitem = 0
     wishitem = 0
@@ -114,14 +116,19 @@ class CategoryTitle(View):
 class ProductDetail(View):
     def get(self, request, pk):
         product = Product.objects.get(pk=pk)
-        wishlist = Wishlist.objects.filter(Q(product=product)& Q(user=request.user))
-        
-        totalitem = 0
-        wishitem = 0
+
+        # Check if the user is authenticated
         if request.user.is_authenticated:
+            wishlist = Wishlist.objects.filter(Q(product=product) & Q(user=request.user))
             totalitem = len(Cart.objects.filter(user=request.user))
             wishitem = len(Wishlist.objects.filter(user=request.user))
+        else:
+            wishlist = None
+            totalitem = 0
+            wishitem = 0
+        
         return render(request, "app/productdetail.html", locals())
+
     
     
 class CustomerRegistrationView(View):
@@ -145,7 +152,7 @@ class CustomerRegistrationView(View):
             messages.warning(request, "Registration Failed")
         return render(request, "app/customerregistration.html", locals())
 
-@method_decorator(login_required, name='dispatch')
+
 class ProfileView(View):
     def get(self, request):
         form = CustomerProfileForm()
@@ -176,7 +183,7 @@ class ProfileView(View):
             messages.warning(request, "Profile Failed")
         return render(request, "app/profile.html", locals())
           
-@login_required
+
 def address(request):
     add = Customer.objects.filter(user=request.user)
     totalitem = 0
@@ -245,7 +252,7 @@ def show_cart(request):
     return render(request, 'app/addtocart.html',locals())
 
 
-@method_decorator(login_required, name='dispatch')
+
 class checkout(View):
     def get(self, request):
         totalitem = 0
@@ -279,53 +286,6 @@ class checkout(View):
             
             payment.save()
         return render(request, 'app/checkout.html', locals())
-
-
-
-
-
-
-def payment_done(request):
-    # Fetching data from GET parameters
-    order_id = request.GET.get('order_id')
-    payment_id = request.GET.get('payment_id')
-    cust_id = request.GET.get('cust_id')  # Selected address ID
-
-    # Ensure the user is authenticated
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('login'))  # Redirect to login page if not authenticated
-
-    try:
-        # Get the customer using the logged-in user and selected customer ID
-        user = request.user
-        customer = Customer.objects.get(user=user, id=cust_id)  # Use cust_id to select the correct address
-
-        # Fetch the payment details using the order_id
-        payment = Payment.objects.get(razorpay_order_id=order_id)
-
-        # Update the payment details with the received payment_id and mark as paid
-        payment.razorpay_payment_id = payment_id
-        payment.paid = True
-        payment.save()
-
-        # Now, update the cart and create an order
-        cart = Cart.objects.filter(user=user)  # Get the cart items for the authenticated user
-        for c in cart:
-            # Create the order and associate it with the selected customer
-            OrderPlaced(user=user, customer=customer, payment=payment, product=c.product, quantity=c.quantity).save()
-            c.delete()  # Clear the cart item after placing the order
-
-        return render(request, 'app/paymentdone.html', locals())
-
-    except Customer.DoesNotExist:
-        return HttpResponse("Invalid customer ID", status=404)
-    except Payment.DoesNotExist:
-        return HttpResponse("Invalid payment details", status=404)
-
-
-
-     
-
 
 
 
@@ -397,18 +357,21 @@ def remove_cart(request):
     
 
 
-
+@login_required
 def payment_done(request):
-    # Fetching data from GET parameters
+    # Fetch data from GET parameters
     order_id = request.GET.get('order_id')
     payment_id = request.GET.get('payment_id')
     cust_id = request.GET.get('cust_id')  # Selected address ID
 
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('login'))
-
     try:
         user = request.user
+        if not user.is_authenticated:  # Re-authenticate the user if session expired
+            # Optional: Re-login the user automatically (ensure security concerns are addressed)
+            user = authenticate(username=user.username, password="user_password")
+            if user:
+                login(request, user)
+
         customer = Customer.objects.get(user=user, id=cust_id)
         payment = Payment.objects.get(razorpay_order_id=order_id)
 
@@ -471,7 +434,7 @@ def download_receipt(request, payment_id):
         return HttpResponse("Payment details not found", status=404)
 
 
-@login_required
+
 def orders(request):
     totalitem = 0
     wishitem = 0
@@ -485,31 +448,36 @@ def orders(request):
 @login_required
 def plus_wishlist(request):
     if request.method == "GET":
-        prod_id=request.GET['prod_id']
-        product=Product.objects.get(id=prod_id)
-        user = request.user
-        Wishlist(user=user, product=product).save()
-        data={
-        'message': 'Wishlist Added Successfully',
-        }
-
+        prod_id = request.GET.get('prod_id')
+        try:
+            product = Product.objects.get(id=prod_id)
+            Wishlist.objects.get_or_create(user=request.user, product=product)
+            data = {
+                'message': 'Wishlist Added Successfully',
+            }
+        except Product.DoesNotExist:
+            data = {
+                'message': 'Product does not exist',
+            }
         return JsonResponse(data)
-    
     
 @login_required
 def minus_wishlist(request):
     if request.method == "GET":
-        prod_id=request.GET['prod_id']
-        product=Product.objects.get(id=prod_id)
-        user = request.user
-        Wishlist.objects.filter(user=user, product=product).delete()
-        data={
-        'message': 'Wishlist removed Successfully',
-        }
-
+        prod_id = request.GET.get('prod_id')
+        try:
+            product = Product.objects.get(id=prod_id)
+            Wishlist.objects.filter(user=request.user, product=product).delete()
+            data = {
+                'message': 'Wishlist removed Successfully',
+            }
+        except Product.DoesNotExist:
+            data = {
+                'message': 'Product does not exist',
+            }
         return JsonResponse(data)
     
-@login_required
+
 def search(request):
     query = request.GET['search']
     totalitem = 0
@@ -519,7 +487,6 @@ def search(request):
         wishitem = len(Wishlist.objects.filter(user=request.user))
     product = Product.objects.filter(Q(title__icontains=query))
     return render(request, "app/search.html", locals())
-
 
 @login_required
 def show_wishlist(request):

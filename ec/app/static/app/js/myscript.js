@@ -57,30 +57,46 @@
     })
 })
 
-$('.plus-wishlist').click(function(){
-    var id=$(this).attr("pid").toString();
+$('.plus-wishlist').click(function() {
+    var id = $(this).attr("pid").toString();
     $.ajax({
         type: "GET",
-        url:"/pluswishlist",
-        data:{
-        prod_id:id
-    },
-    success: function(data){
-    window.location.href = `http://localhost:8000/product-detail/${id}`
-        }    
-    })
-})
-
-$('.minus-wishlist').click(function(){
-    var id=$(this).attr("pid").toString();
-    $.ajax({
-        type: "GET",
-        url:"/minuswishlist",
-        data:{
-        prod_id:id
-    },
-    success: function(data){
-    window.location.href = `http://localhost:8000/product-detail/${id}`
+        url: "/pluswishlist",
+        data: {
+            prod_id: id
+        },
+        success: function(data) {
+            if (data.message === "Wishlist Added Successfully") {
+                window.location.href = `/product-detail/${id}`;
+            }
+        },
+        error: function(xhr) {
+            if (xhr.status === 401) { // Unauthorized
+                alert("Your session has expired. Please log in again.");
+                window.location.href = "/login/";
+            }
         }
-    })
-})
+    });
+});
+
+$('.minus-wishlist').click(function() {
+    var id = $(this).attr("pid").toString();
+    $.ajax({
+        type: "GET",
+        url: "/minuswishlist",
+        data: {
+            prod_id: id
+        },
+        success: function(data) {
+            if (data.message === "Wishlist removed Successfully") {
+                window.location.href = `/product-detail/${id}`;
+            }
+        },
+        error: function(xhr) {
+            if (xhr.status === 401) { // Unauthorized
+                alert("Your session has expired. Please log in again.");
+                window.location.href = "/login/";
+            }
+        }
+    });
+});
