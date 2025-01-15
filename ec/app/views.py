@@ -253,29 +253,42 @@ def show_cart(request):
 
 
 
+from django.shortcuts import redirect
+
+
 class checkout(View):
     def get(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')  # Redirect to login if not authenticated
+        
+        # Proceed with the rest of the logic after ensuring the user is authenticated
         totalitem = 0
         wishitem = 0
-        if request.user.is_authenticated:
-            totalitem = len(Cart.objects.filter(user=request.user))
-            wishitem = len(Wishlist.objects.filter(user=request.user))
+        totalamount = 0
+        razoramount = 0
+
+        totalitem = len(Cart.objects.filter(user=request.user))
+        wishitem = len(Wishlist.objects.filter(user=request.user))
+
         user = request.user
         add = Customer.objects.filter(user=user)
-        cart_items=Cart.objects.filter(user=user)
-        famount=0
+        cart_items = Cart.objects.filter(user=user)
+
+        famount = 0
         for p in cart_items:
-            value = p.quantity*p.product.discounted_price
-            famount = famount + value
+            value = p.quantity * p.product.discounted_price
+            famount += value
+
         totalamount = famount + 40
         razoramount = int(totalamount * 100)
+
         client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
         data = {"amount": razoramount, "currency": "INR", "receipt": "order_rcptid_12"}
         payment_response = client.order.create(data=data)
-        print(payment_response)
-        #{'amount': 50800, 'amount_due': 50800, 'amount_paid': 0, 'attempts': 0, 'created_at': 1734561741, 'currency': 'INR', 'entity': 'order', 'id': 'order_PYo9O6JIyCSSBz', 'notes': [], 'offer_id': None, 'receipt': 'order_rcptid_12', 'status': 'created'}
+
         order_id = payment_response['id']
         order_status = payment_response['status']
+
         if order_status == 'created':
             payment = Payment(
                 user=user,
@@ -283,9 +296,10 @@ class checkout(View):
                 amount=totalamount,
                 razorpay_payment_status=order_status
             )
-            
             payment.save()
+
         return render(request, 'app/checkout.html', locals())
+
 
 
 
@@ -359,19 +373,20 @@ def remove_cart(request):
 
 @login_required
 def payment_done(request):
-    # Fetch data from GET parameters
+    # Print session info before anything else
+    print(f"Session before payment: {request.session.session_key}")
+    print(f"User authenticated: {request.user.is_authenticated}")
+    
+    if not request.user.is_authenticated:
+        print("User is not authenticated. Redirecting to login.")
+        return redirect('login')  # Explicit redirect to the login page if the user is not authenticated
+    
+    # Continue with your logic
     order_id = request.GET.get('order_id')
     payment_id = request.GET.get('payment_id')
-    cust_id = request.GET.get('cust_id')  # Selected address ID
-
+    cust_id = request.GET.get('cust_id')
     try:
         user = request.user
-        if not user.is_authenticated:  # Re-authenticate the user if session expired
-            # Optional: Re-login the user automatically (ensure security concerns are addressed)
-            user = authenticate(username=user.username, password="user_password")
-            if user:
-                login(request, user)
-
         customer = Customer.objects.get(user=user, id=cust_id)
         payment = Payment.objects.get(razorpay_order_id=order_id)
 
@@ -392,12 +407,16 @@ def payment_done(request):
             ).save()
             c.delete()
 
+        print(f"Session after payment: {request.session.session_key}")
         return render(request, 'app/paymentdone.html', {'payment': payment})
-
+    
     except Customer.DoesNotExist:
         return HttpResponse("Invalid customer ID", status=404)
     except Payment.DoesNotExist:
         return HttpResponse("Invalid payment details", status=404)
+
+
+
 
 
 def download_receipt(request, payment_id):
@@ -498,3 +517,87 @@ def show_wishlist(request):
         wishitem = len(Wishlist.objects.filter(user=request.user))
     product = Wishlist.objects.filter(user=user)
     return render(request, "app/wishlist.html", locals())
+
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import razorpay
+from django.conf import settings
+import json
+
+@csrf_exempt
+def razorpay_webhook(request):
+    client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
+
+    # Read the request body
+    payload = request.body
+    signature = request.META.get('HTTP_X_RAZORPAY_SIGNATURE')
+
+    # Verify the webhook signature
+    try:
+        client.utility.verify_webhook_signature(payload, signature, settings.RAZORPAY_WEBHOOK_SECRET)
+    except razorpay.errors.SignatureVerificationError:
+        return JsonResponse({'error': 'Invalid signature'}, status=400)
+
+    # Parse the payload data
+    event = json.loads(payload)
+
+    # Handle the payment success event
+    if event['event'] == 'payment.captured':
+        payment_id = event['payload']['payment']['entity']['id']
+        order_id = event['payload']['payment']['entity']['order_id']
+
+        payment = Payment.objects.get(razorpay_order_id=order_id)
+        payment.razorpay_payment_id = payment_id
+        payment.paid = True
+        payment.save()
+
+        # Process cart and create orders
+        cart = Cart.objects.filter(user=payment.user)
+        for c in cart:
+            OrderPlaced(
+                user=payment.user,
+                customer=c.user.customer,
+                payment=payment,
+                product=c.product,
+                quantity=c.quantity
+            ).save()
+            c.delete()
+
+    return JsonResponse({'status': 'success'}, status=200)
+'''
+class checkout(View):
+    def get(self, request):
+        totalitem = 0
+        wishitem = 0
+        if request.user.is_authenticated:
+            totalitem = len(Cart.objects.filter(user=request.user))
+            wishitem = len(Wishlist.objects.filter(user=request.user))
+        user = request.user
+        add = Customer.objects.filter(user=user)
+        cart_items=Cart.objects.filter(user=user)
+        famount=0
+        for p in cart_items:
+            value = p.quantity*p.product.discounted_price
+            famount = famount + value
+        totalamount = famount + 40
+        razoramount = int(totalamount * 100)
+        client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
+        data = {"amount": razoramount, "currency": "INR", "receipt": "order_rcptid_12"}
+        payment_response = client.order.create(data=data)
+        print(payment_response)
+        #{'amount': 50800, 'amount_due': 50800, 'amount_paid': 0, 'attempts': 0, 'created_at': 1734561741, 'currency': 'INR', 'entity': 'order', 'id': 'order_PYo9O6JIyCSSBz', 'notes': [], 'offer_id': None, 'receipt': 'order_rcptid_12', 'status': 'created'}
+        order_id = payment_response['id']
+        order_status = payment_response['status']
+        if order_status == 'created':
+            payment = Payment(
+                user=user,
+                razorpay_order_id=order_id,
+                amount=totalamount,
+                razorpay_payment_status=order_status
+            )
+            
+            payment.save()
+        return render(request, 'app/checkout.html', locals())
+'''

@@ -83,12 +83,14 @@
         "currency": "INR",
         "name": "DairyDelight",
         "order_id": "{{order_id}}",  // Generated order_id
-        "handler": function (response) {
-            console.log("success");
-            var form = document.getElementById("myform");
-            // Redirect with payment details
-            window.location.href = `http://localhost:8000/paymentdone?order_id=${response.razorpay_order_id}&payment_id=${response.razorpay_payment_id}&cust_id=${form.elements["custid"].value}`;
-        },
+       "handler": function (response) {
+    console.log("Payment successful");
+    const form = document.getElementById("myform");
+    // Redirect with payment details
+    const redirectURL = `/paymentdone?order_id=${response.razorpay_order_id}&payment_id=${response.razorpay_payment_id}&cust_id=${form.elements["custid"].value}`;
+    window.location.href = redirectURL;
+},
+
         "theme": {
             "color": "#3399cc"
         }
@@ -97,6 +99,7 @@
     var rzp1 = new Razorpay(options);
     rzp1.on('payment.failed', function (response) {
         alert(response.error.description);
+        window.location.href = "/checkout"; 
     });
 
     document.getElementById('rzp-button1').onclick = function (e) {

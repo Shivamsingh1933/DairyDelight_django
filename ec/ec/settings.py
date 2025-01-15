@@ -138,11 +138,20 @@ RAZOR_KEY_SECRET = "o2MVnjD8pMD3MlyZm2tDJEOB"
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
-SESSION_COOKIE_AGE = 1209600  # Two weeks
+# Example settings to increase session duration
+SESSION_COOKIE_AGE = 1209600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
 SESSION_COOKIE_SAMESITE = 'Lax'  # Ensures cookies are sent during Razorpay redirects
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Default
 SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True  # Ensures session is saved on every request
+CSRF_USE_SESSIONS = True
+INSTALLED_APPS += ['corsheaders']
+MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
+
+CORS_ALLOW_ALL_ORIGINS = True
+
 
